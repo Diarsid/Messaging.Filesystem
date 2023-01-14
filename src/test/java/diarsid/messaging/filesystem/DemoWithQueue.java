@@ -53,4 +53,16 @@ public class DemoWithQueue {
             agent1.startWork();
         }
     }
+
+    public static class AgentB {
+
+        public static void main(String[] args) {
+            Messaging messaging = new MessagingThroughFilesImpl("TEST");
+
+            Messaging.Queue<String> queue = messaging.queue("queue_1", String.class);
+
+            Messaging.Agent.OfQueue<String> agent1 = queue.connect("agent_Qb", RECEIVER);
+            agent1.startWork();
+        }
+    }
 }

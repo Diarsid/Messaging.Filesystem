@@ -184,6 +184,8 @@ public abstract class AgentOfDirectory<T> extends AbstractStatefulPausableDestro
             this.possibleQueueReadiness.resetTo(new CountDownLatch(1));
             this.asyncForPeekOldMessages.ifPresent((async) -> {
                 this.asyncPeekingOldMessages.ifPresent(job -> job.cancel(true));
+                this.asyncPeekingOldMessages.nullify();
+                shutdownAndWait(async);
             });
             this.asyncForPeekOldMessages.nullify();
             this.asyncForPeekOldMessages.ifNotPresentResetTo(this
@@ -256,6 +258,11 @@ public abstract class AgentOfDirectory<T> extends AbstractStatefulPausableDestro
         if ( this.subscribed ) {
             return this.destination.unsubscribe(super.name());
         }
+        this.asyncForPeekOldMessages.ifPresent((async) -> {
+            this.asyncPeekingOldMessages.ifPresent(job -> job.cancel(true));
+            this.asyncPeekingOldMessages.nullify();
+            shutdownAndWait(async);
+        });
         this.asyncTakingFromQueue.ifPresent(job -> job.cancel(true));
         this.asyncTakingFromQueue.nullify();
         shutdownAndWait(this.asyncForTakeFromQueue);
@@ -267,6 +274,11 @@ public abstract class AgentOfDirectory<T> extends AbstractStatefulPausableDestro
         if ( this.possibleQueueReadiness.isPresent() ) {
             try {
                 this.possibleQueueReadiness.get().await();
+                this.asyncForPeekOldMessages.ifPresent((async) -> {
+                    this.asyncPeekingOldMessages.ifPresent(job -> job.cancel(true));
+                    this.asyncPeekingOldMessages.nullify();
+                    shutdownAndWait(async);
+                });
             }
             catch (InterruptedException e) {
                 return;
